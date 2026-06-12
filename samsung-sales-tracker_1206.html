@@ -1,0 +1,1568 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no"
+    />
+    <title>Samsung Sales Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary: 221 83% 53%; /* Samsung Blue-ish */
+        --primary-foreground: 0 0% 100%;
+        --background: 222 47% 6%; /* Darker background */
+        --foreground: 210 40% 98%; /* Light text */
+        --card: 222 47% 11%; /* Dark card */
+        --card-foreground: 210 40% 98%;
+        --border: 222 47% 15%;
+        --input: 222 47% 15%;
+        --ring: 221 83% 53%;
+        --radius: 0.75rem;
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.5);
+        --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.5);
+        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.5);
+      }
+
+      * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Inter", sans-serif;
+        background-color: hsl(var(--background));
+        color: hsl(var(--foreground));
+        -webkit-font-smoothing: antialiased;
+        line-height: 1.5;
+        font-size: 16px;
+      }
+
+      /* Layout */
+      .app-container {
+        max-width: 800px;
+        margin: 0 auto;
+        min-height: 100vh;
+        padding-bottom: 8rem; /* Space for footer */
+      }
+
+      /* Header */
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        background-color: hsla(222, 47%, 11%, 0.8);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid hsl(var(--border));
+        padding: 0.75rem 1rem;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .header-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .logo-container {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .logo {
+        width: 2.5rem;
+        height: 2.5rem;
+        background: linear-gradient(135deg, hsl(221, 83%, 53%), hsl(200, 90%, 60%));
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 800;
+        font-size: 1.25rem;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+      }
+
+      .header-title h1 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        color: white;
+      }
+
+      .header-title p {
+        margin: 0;
+        font-size: 0.75rem;
+        color: hsl(215 16% 70%);
+        font-weight: 500;
+      }
+
+      .date-badge {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: hsl(var(--primary));
+        background-color: hsla(221, 83%, 53%, 0.1);
+        padding: 0.35rem 0.75rem;
+        border-radius: 9999px;
+        border: 1px solid hsla(221, 83%, 53%, 0.2);
+      }
+
+      /* Main Content */
+      main {
+        padding: 1.5rem 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+
+      /* Sections */
+      section {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem 1rem;
+        background-color: hsl(var(--card));
+        border: 1px solid hsl(var(--border));
+        border-radius: var(--radius);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .section-header:active {
+        background-color: hsl(222 20% 15%);
+        transform: scale(0.99);
+      }
+
+      .section-title {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .section-title h2 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+        color: white;
+      }
+
+      .section-toggle {
+        color: hsl(215 16% 70%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .section-header.collapsed .section-toggle {
+        transform: rotate(-90deg);
+      }
+
+      .section-content {
+        overflow: hidden;
+        transition: all 0.3s ease-in-out;
+        max-height: 2000px;
+        opacity: 1;
+      }
+
+      .section-content.collapsed {
+        max-height: 0;
+        opacity: 0;
+        margin-top: -0.5rem;
+      }
+
+      /* Cards & Tables */
+      .card {
+        background: hsl(var(--card));
+        border-radius: var(--radius);
+        border: 1px solid hsl(var(--border));
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+      }
+
+      .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 0.875rem;
+      }
+
+      th {
+        background-color: hsl(222 20% 15%);
+        color: hsl(215 16% 70%);
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+        padding: 0.75rem 0.5rem;
+        text-align: center;
+        border-bottom: 1px solid hsl(var(--border));
+        white-space: nowrap;
+      }
+
+      th:first-child {
+        text-align: left;
+        padding-left: 1rem;
+        position: sticky;
+        left: 0;
+        z-index: 10;
+        background-color: hsl(222 20% 15%);
+        border-right: 1px solid hsl(var(--border));
+      }
+      
+      th.bg-highlight {
+        background-color: hsla(221, 83%, 53%, 0.1);
+        color: hsl(var(--primary));
+      }
+
+      td {
+        padding: 0.5rem;
+        border-bottom: 1px solid hsl(var(--border));
+        text-align: center;
+        color: hsl(215 16% 90%);
+      }
+      
+      tr:last-child td {
+        border-bottom: none;
+      }
+
+      td:first-child {
+        text-align: left;
+        padding-left: 1rem;
+        font-weight: 500;
+        position: sticky;
+        left: 0;
+        z-index: 5;
+        background-color: hsl(var(--card));
+        border-right: 1px solid hsl(var(--border));
+        min-width: 120px;
+      }
+
+      /* Inputs */
+      input[type="number"], input[type="text"] {
+        width: 100%;
+        min-width: 60px;
+        height: 2.25rem;
+        padding: 0 0.5rem;
+        border: 1px solid hsl(var(--input));
+        border-radius: 0.375rem;
+        font-size: 0.9rem;
+        text-align: center;
+        transition: all 0.2s;
+        background: hsl(222 20% 15%);
+        color: white;
+        font-family: inherit;
+        -moz-appearance: textfield;
+        appearance: textfield;
+      }
+
+      input::-webkit-outer-spin-button,
+      input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        appearance: none;
+        margin: 0;
+      }
+
+      input:focus {
+        outline: none;
+        border-color: hsl(var(--ring));
+        box-shadow: 0 0 0 3px hsla(221, 83%, 53%, 0.15);
+        background: hsl(222 20% 20%);
+        z-index: 2;
+        position: relative;
+      }
+
+      input.input-highlight {
+        background-color: hsla(221, 83%, 53%, 0.1);
+        border-color: hsla(221, 83%, 53%, 0.2);
+        color: hsl(var(--primary));
+        font-weight: 600;
+      }
+
+      input.input-highlight:focus {
+        border-color: hsl(var(--ring));
+      }
+
+      /* Summary Section */
+      .summary-grid {
+        padding: 1.5rem;
+        display: grid;
+        gap: 1.5rem;
+      }
+
+      .form-field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .form-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: hsl(215 16% 70%);
+        letter-spacing: 0.05em;
+      }
+
+      .datalist-input-group {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      .selected-items-box {
+        margin-top: 0.75rem;
+        padding: 0.75rem;
+        background-color: hsl(222 20% 15%);
+        border-radius: 0.5rem;
+        border: 1px solid hsl(var(--border));
+        font-size: 0.875rem;
+        line-height: 1.6;
+      }
+
+      .selected-items-box strong {
+        color: white;
+        display: block;
+        margin-bottom: 0.25rem;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+      }
+
+      .selected-items-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        color: hsl(215 16% 80%);
+      }
+
+      .tag {
+        background: hsl(222 20% 25%);
+        padding: 2px 8px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid hsl(var(--border));
+        font-size: 0.8rem;
+      }
+
+      .tag-remove {
+        cursor: pointer;
+        color: hsl(0 84% 60%);
+        font-weight: bold;
+        padding: 0 2px;
+      }
+
+      .tag-qty {
+        background: hsl(var(--primary));
+        color: white;
+        font-weight: 700;
+        font-size: 0.7rem;
+        padding: 1px 6px;
+        border-radius: 9999px;
+        line-height: 1.3;
+      }
+
+      /* Footer Actions */
+      .footer-actions {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 1rem;
+        background: hsla(222, 47%, 11%, 0.9);
+        backdrop-filter: blur(12px);
+        border-top: 1px solid hsl(var(--border));
+        z-index: 40;
+        display: flex;
+        justify-content: center;
+        gap: 0.75rem;
+        box-shadow: 0 -4px 12px rgba(0,0,0,0.5);
+      }
+
+      .footer-inner {
+        width: 100%;
+        max-width: 800px;
+        display: flex;
+        justify-content: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        height: 2.75rem;
+        padding: 0 1.25rem;
+        border-radius: 0.5rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+        flex: 1;
+        min-width: 110px;
+        white-space: nowrap;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, hsl(221, 83%, 53%), hsl(221, 83%, 45%));
+        color: white;
+        box-shadow: 0 4px 6px rgba(37, 99, 235, 0.25);
+      }
+
+      .btn-primary:active {
+        transform: translateY(1px);
+        box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+      }
+
+      .btn-outline {
+        background: hsl(222 20% 15%);
+        border: 1px solid hsl(var(--border));
+        color: white;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .btn-outline:active {
+        background-color: hsl(222 20% 20%);
+        transform: translateY(1px);
+      }
+
+      /* Modal */
+      .modal-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background-color: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(4px);
+        z-index: 100;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+      }
+
+      .modal-backdrop.open {
+        display: flex;
+        opacity: 1;
+      }
+
+      .modal-content {
+        background: hsl(var(--card));
+        width: 100%;
+        max-width: 500px;
+        border-radius: 1rem;
+        box-shadow: var(--shadow-lg);
+        display: flex;
+        flex-direction: column;
+        max-height: 90vh;
+        transform: scale(0.95);
+        transition: transform 0.2s ease;
+        border: 1px solid hsl(var(--border));
+      }
+
+      .modal-backdrop.open .modal-content {
+        transform: scale(1);
+      }
+
+      .modal-header {
+        padding: 1.25rem;
+        border-bottom: 1px solid hsl(var(--border));
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .modal-header h3 {
+        margin: 0;
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: white;
+      }
+
+      .modal-body {
+        flex: 1;
+        padding: 1.25rem;
+        overflow-y: auto;
+      }
+
+      .report-textarea {
+        width: 100%;
+        height: 300px;
+        padding: 1rem;
+        border: 1px solid hsl(var(--border));
+        border-radius: 0.5rem;
+        font-family: "Menlo", "Monaco", "Courier New", monospace;
+        font-size: 0.8rem;
+        background-color: hsl(222 20% 6%);
+        color: #10b981;
+        resize: none;
+        white-space: pre;
+      }
+
+      .report-textarea:focus {
+        outline: none;
+        border-color: hsl(var(--ring));
+        background-color: hsl(222 20% 8%);
+      }
+
+      .modal-footer {
+        padding: 1.25rem;
+        border-top: 1px solid hsl(var(--border));
+        display: flex;
+        gap: 0.75rem;
+        justify-content: flex-end;
+      }
+
+      /* Utilities */
+      .hidden { display: none; }
+      
+      @media (min-width: 768px) {
+        .summary-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+        .footer-inner {
+          justify-content: flex-end;
+        }
+        .btn {
+          flex: 0 0 auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-container">
+      <header>
+        <div class="header-content">
+          <div class="logo-container">
+            <div class="logo">S</div>
+            <div class="header-title">
+              <h1>Samsung Sales</h1>
+              <p>AV & HA Tracker</p>
+            </div>
+          </div>
+          <div id="current-date" class="date-badge"></div>
+        </div>
+      </header>
+
+      <main>
+        <!-- Panel Sales Section -->
+        <section>
+          <div class="section-header" data-section="panel">
+            <div class="section-title">
+              <svg class="section-toggle" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m6 9 6 6 6-6"/>
+              </svg>
+              <h2>Panel Sales</h2>
+            </div>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: hsl(var(--primary))">
+              <rect width="20" height="15" x="2" y="3" rx="2" ry="2" />
+              <path d="M7 21h10" />
+              <path d="M12 18v3" />
+            </svg>
+          </div>
+          <div class="section-content">
+            <div class="card">
+              <div class="table-container">
+                <table id="panel-table">
+                  <thead>
+                    <tr>
+                      <th>Model</th>
+                      <th class="bg-highlight">SS</th>
+                      <th>Value</th>
+                    </tr>
+                  </thead>
+                  <tbody id="panel-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Audio Sales Section -->
+        <section>
+          <div class="section-header" data-section="audio">
+            <div class="section-title">
+              <svg class="section-toggle" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m6 9 6 6 6-6"/>
+              </svg>
+              <h2>Audio Sales</h2>
+            </div>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: hsl(160 84% 39%)">
+              <rect width="16" height="20" x="4" y="2" rx="2" ry="2" />
+              <circle cx="12" cy="14" r="4" />
+              <line x1="12" x2="12" y1="6" y2="6" />
+            </svg>
+          </div>
+          <div class="section-content">
+            <div class="card">
+              <div class="table-container">
+                <table id="audio-table">
+                  <thead>
+                    <tr>
+                      <th>Type</th>
+                      <th class="bg-highlight">SS</th>
+                      <th>Value</th>
+                    </tr>
+                  </thead>
+                  <tbody id="audio-body">
+                    <tr>
+                      <td>Audio</td>
+                      <td class="bg-highlight"><input type="number" id="audio-ss" class="input-highlight" value="0"></td>
+                      <td><input type="number" id="audio-value" placeholder="₹"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- HA Sales Section -->
+        <section>
+          <div class="section-header" data-section="ha">
+            <div class="section-title">
+              <svg class="section-toggle" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m6 9 6 6 6-6"/>
+              </svg>
+              <h2>HA Sales</h2>
+            </div>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: hsl(262 83% 58%)">
+              <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+          </div>
+          <div class="section-content">
+            <div class="card">
+              <div class="table-container">
+                <table id="ha-table">
+                  <thead>
+                    <tr>
+                      <th>Category</th>
+                      <th class="bg-highlight">SS</th>
+                      <th>Value</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ha-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Summary Section -->
+        <section>
+          <div class="section-header" data-section="summary">
+             <div class="section-title">
+              <svg class="section-toggle" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m6 9 6 6 6-6"/>
+              </svg>
+              <h2>Summary & Details</h2>
+            </div>
+          </div>
+          <div class="section-content">
+            <div class="card">
+              <div class="summary-grid">
+                
+                <!-- AV Models -->
+                <div class="form-field">
+                  <span class="form-label">AV Models Sold</span>
+                  <div class="datalist-input-group">
+                    <input
+                      type="text"
+                      id="av-models-sold"
+                      list="av-models-list"
+                      placeholder="Type model number..."
+                    />
+                    <button type="button" id="add-av-model-btn" class="btn btn-primary" style="padding: 0 1rem; flex: 0 0 auto; min-width: auto;">
+                      Add
+                    </button>
+                  </div>
+                  <datalist id="av-models-list"></datalist>
+                  <div class="selected-items-box">
+                    <strong>📺 Selected AV Models:</strong>
+                    <div id="selected-av-models-list" class="selected-items-list">None</div>
+                  </div>
+                </div>
+
+                <!-- HA Models -->
+                <div class="form-field">
+                  <span class="form-label">HA Categories Sold</span>
+                  <div class="datalist-input-group">
+                    <input
+                      type="text"
+                      id="ha-models-input"
+                      list="ha-models-list"
+                      placeholder="Type category/model..."
+                    />
+                    <button type="button" id="add-ha-model-btn" class="btn btn-primary" style="padding: 0 1rem; flex: 0 0 auto; min-width: auto;">
+                      Add
+                    </button>
+                  </div>
+                  <datalist id="ha-models-list"></datalist>
+                  <div class="selected-items-box">
+                    <strong>🏠 Selected HA Models:</strong>
+                    <div id="selected-models-list" class="selected-items-list">None</div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <div class="footer-actions">
+        <div class="footer-inner">
+          <button id="save-btn" class="btn btn-primary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
+              <circle cx="12" cy="13" r="3" />
+              <path d="M7 3v5h8V3" />
+            </svg>
+            Save Today
+          </button>
+          <button id="report-btn" class="btn btn-outline">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+              <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+              <path d="M10 9H8" />
+              <path d="M13 13H8" />
+              <path d="M13 17H8" />
+            </svg>
+            Full Report
+          </button>
+          <button id="report-av-btn" class="btn btn-outline">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 4h18v4H3z" />
+              <path d="M7 15h3v5H7z" />
+              <path d="M14 11h3v9h-3z" />
+            </svg>
+            AV Report
+          </button>
+          <button id="report-ha-btn" class="btn btn-outline">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 12l9-9 9 9" />
+              <path d="M9 21V9h6v12" />
+            </svg>
+            HA Report
+          </button>
+          <button id="clear-btn" class="btn btn-outline" style="color: hsl(0 84% 60%); border-color: hsl(0 84% 90%);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 6h18" />
+              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+            </svg>
+            Clear
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="modal-backdrop">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Daily Report</h3>
+          <button id="close-modal" style="background: none; border: none; cursor: pointer; padding: 0.25rem;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <textarea id="report-text" class="report-textarea" readonly></textarea>
+        </div>
+        <div class="modal-footer">
+          <button id="modal-close-btn" class="btn btn-outline" style="flex: 1;">Close</button>
+          <button id="copy-btn" class="btn btn-primary" style="flex: 2;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+              <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+            </svg>
+            Copy to Clipboard
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // State
+      const MODELS = [
+        "32 Smart", "43 FHD", "43 UHD", "43 QLED", "43 MINI-LED",
+        "50 UHD", "50 QLED", "50 MINI-LED",
+        "55 UHD", "55 QLED", "55 OLED", "55 MINI-LED", "55 MICRO RGB",
+        "65 UHD", "65 QLED", "65 OLED", "65 MINI-LED", "65 MICRO RGB",
+        "75+ UHD", "75+ QLED", "75+ OLED", "75+ MINI-LED", "75+ Micro RGB",
+      ];
+      const HA_CATEGORIES = [
+        "SBS", "CBU", "FF", "DC", "TL", "FLT", "SA", "MO", "AC",
+      ];
+
+      // Master Model -> Segment/Price lookup (Model No -> [Segment, Price])
+      const MODEL_DATA = {"RR19H2YC1CR/NL":["DC",16490],"RR19H2YC1CU/NL":["DC",16490],"RR20H11C2RH/HL":["DC",16790],"RR20H2712S8/NL":["DC",16990],"RR20H2712HN/NL":["DC",17690],"RR20H2712HV/NL":["DC",17690],"RR20H1812HN/HL":["DC",18590],"RR20H1812HV/HL":["DC",18590],"RR20H1723S8/HL":["DC",18490],"RR20H2723S8/NL":["DC",18490],"RR20H1723WB/HL":["DC",18790],"RR20H2723RZ/NL":["DC",18790],"RR20H2723UZ/NL":["DC",18790],"RR20H2724S8/NL":["DC",19390],"RR20H1823WB/HL":["DC",19690],"RR20H2823RZ/NL":["DC",19690],"RR20H2823UZ/NL":["DC",19690],"RR21H2G25BB/HL":["DC",20390],"RR21H2G25WR/HL":["DC",20390],"RR21H2H24RZ/HL":["DC",20390],"RR21H2H24UZ/HL":["DC",20390],"RR21H2H25S8/HL":["DC",20890],"RR21H2H259R/HL":["DC",21190],"RR21H2H25BB/HL":["DC",21190],"RR21H2H25BR/HL":["DC",21190],"RR21H2H25HS/HL":["DC",21190],"RR21H2H25HT/HL":["DC",21190],"RR21H2H259U/HL":["DC",21190],"RR24H2723S8/NL":["DC",22990],"RR23H2H34S8/HL":["DC",23290],"RR23H2H34BR/HL":["DC",23590],"RR23H2H34HS/HL":["DC",23590],"RR23H2H34HT/HL":["DC",23590],"RR24H2823HS/NL":["DC",24290],"RR24H2823HT/NL":["DC",24290],"RR23H2H359R/HL":["DC",24390],"RR23H2H359U/HL":["DC",24390],"RR23H2H35RZ/HL":["DC",24390],"RR23H2H35UZ/HL":["DC",24390],"RR26H3832BB/HL":["DC",27990],"RR26H3832BR/HL":["DC",27990],"RS76CG80X0S9HL":["SBS",90790],"RS76CG8103S9HL":["SBS",97490],"RF57A5032B1/TL":["SBS",91390],"RS76CG8103B1HL":["SBS",99990],"RS76CG8113SLHL":["SBS",107090],"RS76CG8113B1HL":["SBS",109090],"RS76CB81A312HL":["SBS",124590],"RS76CB81A333HL":["SBS",123590],"RS78CG8543S9HL":["SBS",124790],"RS78CG8543SLHL":["SBS",129690],"RS78CG8543B1HL":["SBS",131390],"RF65DG90BDSGTL":["SBS",199990],"RF65DB90BD12TL":["SBS",214990],"RS7HCG8543B1HL":["SBS",212390],"RM90F66CNCTL":["SBS",322990],"RF71DB9950QDTL":["SBS",413990],"RT40H28W1QNL":["FF",29190],"RT40H28W1CBNL":["FF",29690],"RT40H28W1CPNL":["FF",29690],"RT40H28W2PNL":["FF",31690],"RT40H28W2HSHL":["FF",32490],"RT40H28W2HTHL":["FF",32490],"RT40H28U2PHL":["FF",33690],"RT40H28U2FHL":["FF",34390],"RT40H30W2PHL":["FF",34290],"RT40H28U2PBHL":["FF",34390],"RT40H28U2PRHL":["FF",34390],"RT40H28W3KHL":["FF",34190],"RT40H30W2KHL":["FF",34590],"RT80H28U2FHL":["FF",35690],"RT40H30U2PHL":["FF",36990],"RT40H30U2PNL":["FF",36990],"RT40H30U2KHL":["FF",37490],"RT40H30U2BBHL":["FF",38290],"RT40H30U2BRHL":["FF",38290],"RT80H30U2THL":["FF",38990],"RT40H30U3PHL":["FF",39490],"RT31H4522S8/HL":["FF",42890],"RT80H30U3KHL":["FF",41990],"RT31H4522BX/HL":["FF",43990],"RT34HG5A42S8HL":["FF",49290],"RT34HG5A42BXHL":["FF",50390],"RT38HG5C42B1HL":["FF",50990],"RT38HG5A42S8HL":["FF",51990],"RT34HG5A43B1HL":["FF",52890],"RT38HG5A42BXHL":["FF",52990],"RT38HG5A43B1HL":["FF",53990],"RT41HG6C42S8HL":["CBU",55990],"RT41HG6A22S8HL":["CBU",57990],"RT41HG6A42B1HL":["CBU",58690],"RT45HG6A22SLHL":["CBU",61790],"RT41HB6A4222HL":["CBU",61690],"RT45HG6A43BXHL":["CBU",64290],"RT45HB6A4222HL":["CBU",65290],"RB45DG6005B1TL":["CBU",67490],"RT80H51C2FHL":["CBU",68090],"RT80H51C2SHL":["CBU",67090],"RT80H51C2BHL":["CBU",71090],"RT80H51C3BHL":["CBU",74090],"RT56HG7A61SLTL":["CBU",82590],"RT56HG7A61B1TL":["CBU",84090],"WW12DB7B24GBTL":["FLT",58990],"WW12DB8B54GSTL":["FLT",65490],"WW12DB8B54GBTL":["FLT",66490],"WW12DG5B24AXTL":["FLT",49490],"WW12DG5B24ASTL":["FLT",50490],"WW12DG5B24ABTL":["FLT",51490],"WW70FG4S02ABTL":["FLT",37190],"WW70R22EK0X/TL":["FLT",40190],"WW90DG5U24ASTL":["FLT",46290],"WW90DG5U24ABTL":["FLT",47290],"WW90DG6U24ABTL":["FLT",48790],"WW90DG6U24AXTL":["FLT",46790],"WW80TA046AB1TL":["FLT",40690],"WW80T504DAB1TL":["FLT",41690],"WW90FG4U04ABTL":["FLT",43790],"WW90FG4U04ASTL":["FLT",42790],"WD12FB7B34GBTL":["FLT",72590],"WD12FB8B94GBTL":["FLT",79390],"WD12FG5B34BBTL":["FLT",69490],"WD25DB8995BZTL":["FLT",322200],"WD25FB8690BETL":["FLT",279000],"WA70BG4441BYTL":["TL",21990],"WA40F08D1CTL":["TL",24490],"WA40F08H2BTL":["TL",26490],"WA40F10H2BTL":["TL",33490],"WA40F10H2CTL":["TL",31490],"WA80F08B3BTL":["TL",30490],"WA80F08E2BTL":["TL",25490],"WA80F08E2CTL":["TL",24990],"WA80F08H2BTL":["TL",29490],"WA80F08S2BTL":["TL",28490],"WA80F08S2CTL":["TL",25990],"WA80F10B3BTL":["TL",35490],"WA80F10B3NTL":["TL",34990],"WA80F10E2CTL":["TL",30490],"WA80F10S2BTL":["TL",33490],"WA80F10S2CTL":["TL",31490],"WA80F12B6BTL":["TL",43490],"WA80F14B6BTL":["TL",50390],"WT10C4260GG/TL":["SA",17390],"WT11A4260GD/TL":["SA",22090],"WT70C3000RR/TL":["SA",11990],"WT70C3200LL/TL":["SA",12890],"WT75B3200GD/TL":["SA",15790],"WT75B3200RR/TL":["SA",14990],"WT75C3200GG/TL":["SA",13690],"WT80B3560GB/TL":["SA",17990],"WT80C4000RR/TL":["SA",14390],"WT80C4200GG/TL":["SA",14990],"WT85B4200GD/TL":["SA",18090],"WT85B4200RR/TL":["SA",17490],"WT90B3560RB/TL":["SA",19890],"WT90C4260GG/TL":["SA",16590],"MC32B7382QC/TL":["MO",36690],"MC32K7056CH/TL":["MO",28590],"MC32A7056CK/TL":["MO",24290],"MC28M6036CH/TL":["MO",22190],"MC28A6036QK/TL":["MO",21190],"MC28A5147VK/TL":["MO",21490],"MC28A5145VK/TL":["MO",20290],"MC28H5025VR/TL":["MO",18890],"MC28A5025VS/TL":["MO",18190],"MC28A5013AK/TL":["MO",14990],"CE76JD-B1/XTL":["MO",13590],"CE73JD1/XTL":["MO",12990],"MG23A3515AK/TL":["MO",9690],"MS23A3513AK/TL":["MO",8990],"43LS03F":["43 QLED",64400],"43Q7FA":["43 QLED",53350],"43Q8FA":["43 QLED",56600],"43U8100F":["43 UHD",37700],"43U8400F":["43 UHD",40000],"43U8600F":["43 UHD",42100],"50LS03F":["50 QLED",78250],"50Q7FA":["50 QLED",62550],"50Q8FA":["50 QLED",64950],"50U8100F":["50 UHD",47200],"50U8400F":["50 UHD",49500],"50U8600F":["50 UHD",51500],"55LS03F":["55 QLED",96700],"55QN70F":["55 QLED",91150],"55QN85F":["55 QLED",116950],"55QN90F":["55 QLED",138150],"55S85F":["55 OLED",138150],"55S90F":["55 OLED",155700],"55S95F":["55 OLED",182400],"55Q7FA":["55 QLED",71800],"55Q8FA":["55 QLED",75950],"55U8100F":["55 UHD",55000],"55U8400F":["55 UHD",57800],"55U8600F":["55 UHD",59800],"65LS03F":["65 QLED",144600],"65QN70F":["65 QLED",131700],"65QN80F":["65 QLED",151050],"65QN85F":["65 QLED",165800],"65QN90F":["65 QLED",189800],"65S85F":["65 OLED",179650],"65S90F":["65 OLED",200850],"65S95F":["65 OLED",232200],"65Q7FA":["65 QLED",112350],"65Q8FA":["65 QLED",119750],"65QN900F":["65 QLED",276450],"65U8100F":["65 UHD",81000],"65U8400F":["65 UHD",85600],"65U8600F":["65 UHD",88850],"70U8500F":["65 UHD",93000],"75LS03F":["75 QLED",267250],"100QN80F":["75 QLED",783500],"115QN90F":["75 QLED",1613250],"75QN80F":["75 QLED",213750],"75QN85F":["75 QLED",267250],"75QN90F":["75 QLED",388900],"85QN85F":["75 QLED",387050],"85QN90F":["75 QLED",506900],"98QN90F":["75 QLED",1013950],"98Q7FA":["75 QLED",424900],"77S90F":["75 OLED",435950],"77S95F":["75 OLED",477400],"83S90F":["75 OLED",543800],"83S95F":["75 OLED",580650],"75Q7FA":["75 QLED",165800],"75Q8FA":["75 QLED",188850],"85Q7FA":["75 QLED",267250],"85Q8FA":["75 QLED",341000],"75QN900F":["75 QLED",599100],"85QN950F":["75 QLED",875650],"75U7300F":["75 UHD",99900],"75U8000F":["75 UHD",102200],"75U8300F":["75 UHD",110500],"75U8500F":["75 UHD",116950],"85U8500F":["75 UHD",234950],"98DU9000":["75 UHD",506900],"75M80H":["75 MINI-LED",159900],"65M80H":["65 MINI-LED",109900],"55M80H":["55 MINI-LED",74900],"85M70H":["85 MINI-LED",240900],"75M70H":["75 MINI-LED",129900],"65M70H":["65 MINI-LED",96900],"55M70H":["55 MINI-LED",66900],"43M71H":["43 MINI-LED",47900],"85U8500H":["85 UHD",219900],"85U8300H":["85 UHD",219900],"75U8500H":["75 UHD",109900],"75U8300H":["75 UHD",109900],"65U8500H":["65 UHD",83900],"55U8500H":["55 UHD",58900],"50U8500H":["50 UHD",47900],"65U8300H":["65 UHD",83900],"55U8300H":["55 UHD",58900],"50U8300H":["50 UHD",47900],"43U8600H":["43 UHD",41400],"43U8400H":["43 UHD",41400],"77S95H":["77 OLED",464900],"77S90H":["77 OLED",404900],"77S85H":["77 OLED",349900],"65S95H":["65 OLED",244900],"65S90H":["65 OLED",212990],"65S85H":["65 OLED",169900],"55S95H":["55 OLED",187900],"55S90H":["55 OLED",149900],"55S85H":["55 OLED",127900],"48S90H":["48 OLED",129900],"75QN70H":["75 QLED",174900],"65QN70H":["65 QLED",129900],"55QN70H":["55 QLED",89900],"50QN70H":["50 QLED",64900],"85R95H":["85 Micro RGB",724900],"75R95H":["75 Micro RGB",549900],"65R95H":["65 MICRO RGB",249900],"85R85H":["85 Micro RGB",429990],"75R85H":["75 Micro RGB",344900],"65R85H":["65 Micro RGB",179900],"55R85H":["55 MICRO RGB",137900],"75LS03HE":["75 QLED",259900],"65LS03HE":["65 QLED",144900],"55LS03HE":["55 QLED",97900],"43LS03HE":["43 QLED",62900],"100QN80H":["100 QLED",599900],"75QN80H":["75 QLED",209900],"65QN80H":["65 QLED",139900],"55QN80H":["55 QLED",104900],"43QN70H":["43 QLED",57900],"50M70H":["50 MINI-LED",53900],"85QN70H":["85 QLED",299900],"83S90H":["83 OLED",499900],"83S95H":["83 OLED",569900]};
+
+      // Map a master-sheet segment name (e.g. "85 QLED", "48 OLED") to the
+      // matching row key in MODELS or HA_CATEGORIES.
+      const findModelKey = (segment) => {
+        const segUpper = segment.trim().toUpperCase();
+        if (HA_CATEGORIES.some((h) => h.toUpperCase() === segUpper)) {
+          return { type: "ha", key: HA_CATEGORIES.find((h) => h.toUpperCase() === segUpper) };
+        }
+        const m = segUpper.match(/^(\d+)\s+(.+)$/);
+        if (!m) return null;
+        let size = parseInt(m[1], 10);
+        const tvType = m[2].trim();
+        if (segUpper === "48 OLED") size = 55; // closest available size bucket
+        const prefix = size >= 75 ? "75+" : String(size);
+        const candidate = `${prefix} ${tvType}`.toUpperCase();
+        const match = MODELS.find((mod) => mod.toUpperCase() === candidate);
+        return match ? { type: "av", key: match } : null;
+      };
+
+      // Auto-fill the panel/HA tables (qty + value) when a model number is added.
+      const adjustModelLookup = (modelNumber, sign) => {
+        const entry = MODEL_DATA[modelNumber.trim().toUpperCase()];
+        if (!entry) return;
+        const [segment, price] = entry;
+        const found = findModelKey(segment);
+        if (!found) return;
+
+        const body = found.type === "av" ? panelBody : haBody;
+        const attr = found.type === "av" ? "data-model" : "data-cat";
+        const ssInput = body.querySelector(`input[${attr}="${found.key}"][data-field="ss"]`);
+        const valInput = body.querySelector(`input[${attr}="${found.key}"][data-field="value"]`);
+
+        if (ssInput) {
+          ssInput.value = Math.max(0, (parseInt(ssInput.value) || 0) + sign * 1);
+          if (found.type === "av") state.panel[found.key].ss = ssInput.value;
+          else state.ha[found.key].ss = ssInput.value;
+        }
+        if (valInput) {
+          valInput.value = Math.max(0, (parseInt(valInput.value) || 0) + sign * price);
+          if (found.type === "av") state.panelValues[found.key] = valInput.value;
+          else state.haValues[found.key] = valInput.value;
+        }
+        updateTotals();
+      };
+
+      const applyModelLookup = (modelNumber) => adjustModelLookup(modelNumber, 1);
+      const revertModelLookup = (modelNumber) => adjustModelLookup(modelNumber, -1);
+
+      // Models for sold dropdowns (auto-generated from price master list)
+      const TV_MODELS_SOLD = [
+        "100QN80F", "100QN80H", "115QN90F", "43LS03F", "43LS03HE",
+        "43M71H", "43Q7FA", "43Q8FA", "43QN70H", "43U8100F",
+        "43U8400F", "43U8400H", "43U8600F", "43U8600H", "48S90H",
+        "50LS03F", "50M70H", "50Q7FA", "50Q8FA", "50QN70H",
+        "50U8100F", "50U8300H", "50U8400F", "50U8500H", "50U8600F",
+        "55LS03F", "55LS03HE", "55M70H", "55M80H", "55Q7FA",
+        "55Q8FA", "55QN70F", "55QN70H", "55QN80H", "55QN85F",
+        "55QN90F", "55R85H", "55S85F", "55S85H", "55S90F",
+        "55S90H", "55S95F", "55S95H", "55U8100F", "55U8300H",
+        "55U8400F", "55U8500H", "55U8600F", "65LS03F", "65LS03HE",
+        "65M70H", "65M80H", "65Q7FA", "65Q8FA", "65QN70F",
+        "65QN70H", "65QN80F", "65QN80H", "65QN85F", "65QN900F",
+        "65QN90F", "65R85H", "65R95H", "65S85F", "65S85H",
+        "65S90F", "65S90H", "65S95F", "65S95H", "65U8100F",
+        "65U8300H", "65U8400F", "65U8500H", "65U8600F", "70U8500F",
+        "75LS03F", "75LS03HE", "75M70H", "75M80H", "75Q7FA",
+        "75Q8FA", "75QN70H", "75QN80F", "75QN80H", "75QN85F",
+        "75QN900F", "75QN90F", "75R85H", "75R95H", "75U7300F",
+        "75U8000F", "75U8300F", "75U8300H", "75U8500F", "75U8500H",
+        "77S85H", "77S90F", "77S90H", "77S95F", "77S95H",
+        "83S90F", "83S90H", "83S95F", "83S95H", "85M70H",
+        "85Q7FA", "85Q8FA", "85QN70H", "85QN85F", "85QN90F",
+        "85QN950F", "85R85H", "85R95H", "85U8300H", "85U8500F",
+        "85U8500H", "98DU9000", "98Q7FA", "98QN90F",
+      ];
+
+      const HA_MODELS_SOLD = [
+        "CE73JD1/XTL", "CE76JD-B1/XTL", "MC28A5013AK/TL", "MC28A5025VS/TL", "MC28A5145VK/TL",
+        "MC28A5147VK/TL", "MC28A6036QK/TL", "MC28H5025VR/TL", "MC28M6036CH/TL", "MC32A7056CK/TL",
+        "MC32B7382QC/TL", "MC32K7056CH/TL", "MG23A3515AK/TL", "MS23A3513AK/TL", "RB45DG6005B1TL",
+        "RF57A5032B1/TL", "RF65DB90BD12TL", "RF65DG90BDSGTL", "RF71DB9950QDTL", "RM90F66CNCTL",
+        "RR19H2YC1CR/NL", "RR19H2YC1CU/NL", "RR20H11C2RH/HL", "RR20H1723S8/HL", "RR20H1723WB/HL",
+        "RR20H1812HN/HL", "RR20H1812HV/HL", "RR20H1823WB/HL", "RR20H2712HN/NL", "RR20H2712HV/NL",
+        "RR20H2712S8/NL", "RR20H2723RZ/NL", "RR20H2723S8/NL", "RR20H2723UZ/NL", "RR20H2724S8/NL",
+        "RR20H2823RZ/NL", "RR20H2823UZ/NL", "RR21H2G25BB/HL", "RR21H2G25WR/HL", "RR21H2H24RZ/HL",
+        "RR21H2H24UZ/HL", "RR21H2H259R/HL", "RR21H2H259U/HL", "RR21H2H25BB/HL", "RR21H2H25BR/HL",
+        "RR21H2H25HS/HL", "RR21H2H25HT/HL", "RR21H2H25S8/HL", "RR23H2H34BR/HL", "RR23H2H34HS/HL",
+        "RR23H2H34HT/HL", "RR23H2H34S8/HL", "RR23H2H359R/HL", "RR23H2H359U/HL", "RR23H2H35RZ/HL",
+        "RR23H2H35UZ/HL", "RR24H2723S8/NL", "RR24H2823HS/NL", "RR24H2823HT/NL", "RR26H3832BB/HL",
+        "RR26H3832BR/HL", "RS76CB81A312HL", "RS76CB81A333HL", "RS76CG80X0S9HL", "RS76CG8103B1HL",
+        "RS76CG8103S9HL", "RS76CG8113B1HL", "RS76CG8113SLHL", "RS78CG8543B1HL", "RS78CG8543S9HL",
+        "RS78CG8543SLHL", "RS7HCG8543B1HL", "RT31H4522BX/HL", "RT31H4522S8/HL", "RT34HG5A42BXHL",
+        "RT34HG5A42S8HL", "RT34HG5A43B1HL", "RT38HG5A42BXHL", "RT38HG5A42S8HL", "RT38HG5A43B1HL",
+        "RT38HG5C42B1HL", "RT40H28U2FHL", "RT40H28U2PBHL", "RT40H28U2PHL", "RT40H28U2PRHL",
+        "RT40H28W1CBNL", "RT40H28W1CPNL", "RT40H28W1QNL", "RT40H28W2HSHL", "RT40H28W2HTHL",
+        "RT40H28W2PNL", "RT40H28W3KHL", "RT40H30U2BBHL", "RT40H30U2BRHL", "RT40H30U2KHL",
+        "RT40H30U2PHL", "RT40H30U2PNL", "RT40H30U3PHL", "RT40H30W2KHL", "RT40H30W2PHL",
+        "RT41HB6A4222HL", "RT41HG6A22S8HL", "RT41HG6A42B1HL", "RT41HG6C42S8HL", "RT45HB6A4222HL",
+        "RT45HG6A22SLHL", "RT45HG6A43BXHL", "RT56HG7A61B1TL", "RT56HG7A61SLTL", "RT80H28U2FHL",
+        "RT80H30U2THL", "RT80H30U3KHL", "RT80H51C2BHL", "RT80H51C2FHL", "RT80H51C2SHL",
+        "RT80H51C3BHL", "WA40F08D1CTL", "WA40F08H2BTL", "WA40F10H2BTL", "WA40F10H2CTL",
+        "WA70BG4441BYTL", "WA80F08B3BTL", "WA80F08E2BTL", "WA80F08E2CTL", "WA80F08H2BTL",
+        "WA80F08S2BTL", "WA80F08S2CTL", "WA80F10B3BTL", "WA80F10B3NTL", "WA80F10E2CTL",
+        "WA80F10S2BTL", "WA80F10S2CTL", "WA80F12B6BTL", "WA80F14B6BTL", "WD12FB7B34GBTL",
+        "WD12FB8B94GBTL", "WD12FG5B34BBTL", "WD25DB8995BZTL", "WD25FB8690BETL", "WT10C4260GG/TL",
+        "WT11A4260GD/TL", "WT70C3000RR/TL", "WT70C3200LL/TL", "WT75B3200GD/TL", "WT75B3200RR/TL",
+        "WT75C3200GG/TL", "WT80B3560GB/TL", "WT80C4000RR/TL", "WT80C4200GG/TL", "WT85B4200GD/TL",
+        "WT85B4200RR/TL", "WT90B3560RB/TL", "WT90C4260GG/TL", "WW12DB7B24GBTL", "WW12DB8B54GBTL",
+        "WW12DB8B54GSTL", "WW12DG5B24ABTL", "WW12DG5B24ASTL", "WW12DG5B24AXTL", "WW70FG4S02ABTL",
+        "WW70R22EK0X/TL", "WW80T504DAB1TL", "WW80TA046AB1TL", "WW90DG5U24ABTL", "WW90DG5U24ASTL",
+        "WW90DG6U24ABTL", "WW90DG6U24AXTL", "WW90FG4U04ABTL", "WW90FG4U04ASTL",
+      ];
+
+      let state = {
+        panel: {},
+        panelValues: {},
+        audio: { ss: 0, lg: 0, so: 0, ot: 0 },
+        audioValue: 0,
+        ha: {},
+        haValues: {},
+        avValue: 0,
+        haValue: 0,
+        avModels: "",
+        haModels: "",
+      };
+
+      // Init State
+      MODELS.forEach((m) => {
+        state.panel[m] = { ss: 0, so: 0, pa: 0, ot: 0 };
+        state.panelValues[m] = 0;
+      });
+      HA_CATEGORIES.forEach((h) => {
+        state.ha[h] = { ss: 0, lg: 0, go: 0, ot: 0 };
+        state.haValues[h] = 0;
+      });
+
+      // Utils - IMPROVED FOR WHATSAPP
+      const getTodayDate = () => new Date();
+      const getKey = () => `AV_MTD_${getTodayDate().getFullYear()}_${getTodayDate().getMonth()}`;
+      
+      const getTodayStr = () => {
+          const d = getTodayDate();
+          const year = d.getFullYear();
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+      };
+
+      const formatNum = (n) => new Intl.NumberFormat("en-IN").format(n || 0);
+      
+      // Improved padding functions for better WhatsApp alignment
+      const padRight = (s, l) => {
+        const str = String(s);
+        return str + ' '.repeat(Math.max(0, l - str.length));
+      };
+      
+      const padLeft = (s, l) => {
+        const str = String(s);
+        return ' '.repeat(Math.max(0, l - str.length)) + str;
+      };
+
+      // DOM Elements
+      const panelBody = document.getElementById("panel-body");
+      const haBody = document.getElementById("ha-body");
+      const audioSS = document.getElementById("audio-ss");
+      const audioVal = document.getElementById("audio-value");
+      const avModelsInput = document.getElementById("av-models-sold");
+      const haModelsInput = document.getElementById("ha-models-input");
+      const modalTitle = document.querySelector("#modal .modal-header h3");
+
+      // Calculations
+      const updateTotals = () => {
+        const pVal = Object.values(state.panelValues).reduce(
+          (a, b) => a + (parseInt(b) || 0),
+          0,
+        );
+        state.avValue = pVal + (parseInt(audioVal.value) || 0);
+
+        state.haValue = Object.values(state.haValues).reduce(
+          (a, b) => a + (parseInt(b) || 0),
+          0,
+        );
+      };
+
+      // Render Tables
+      MODELS.forEach((m, i) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${m}</td>
+          <td class="bg-highlight"><input type="number" data-model="${m}" data-field="ss" class="input-highlight" value="0"></td>
+          <td><input type="number" data-model="${m}" data-field="value" placeholder="₹"></td>
+        `;
+        panelBody.appendChild(row);
+      });
+
+      HA_CATEGORIES.forEach((h, i) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${h}</td>
+          <td class="bg-highlight"><input type="number" data-cat="${h}" data-field="ss" class="input-highlight" value="0"></td>
+          <td><input type="number" data-cat="${h}" data-field="value" placeholder="₹"></td>
+        `;
+        haBody.appendChild(row);
+      });
+
+      // Events
+      document.addEventListener("input", (e) => {
+        const el = e.target;
+        if (el.dataset.model) {
+          if (el.dataset.field === "value")
+            state.panelValues[el.dataset.model] = el.value;
+          else state.panel[el.dataset.model][el.dataset.field] = el.value;
+        } else if (el.dataset.cat) {
+          if (el.dataset.field === "value")
+            state.haValues[el.dataset.cat] = el.value;
+          else state.ha[el.dataset.cat][el.dataset.field] = el.value;
+        }
+        updateTotals();
+      });
+
+      [audioSS, audioVal].forEach((el) => {
+        el.addEventListener("input", () => {
+          state.audio = {
+            ss: audioSS.value,
+            lg: 0,
+            so: 0,
+            ot: 0,
+          };
+          state.audioValue = audioVal.value;
+          updateTotals();
+        });
+      });
+
+      // Model Management
+      // selectedAvModels / selectedHaModels are arrays of { model, qty }.
+      // Saved/report strings encode repeats as "MODEL x2" on a single line.
+      let selectedAvModels = [];
+      let selectedHaModels = [];
+
+      const parseModelLine = (line) => {
+        const trimmed = line.trim();
+        const m = trimmed.match(/^(.+?)\s+[x×](\d+)$/i);
+        if (m) {
+          return { model: m[1].trim(), qty: parseInt(m[2], 10) || 1 };
+        }
+        return { model: trimmed, qty: 1 };
+      };
+
+      const removeAvModel = (model) => {
+        const entry = selectedAvModels.find(e => e.model === model);
+        if (!entry) return;
+        entry.qty -= 1;
+        revertModelLookup(model);
+        if (entry.qty <= 0) {
+          selectedAvModels = selectedAvModels.filter(e => e.model !== model);
+        }
+        updateSelectedAvModelsDisplay();
+      };
+
+      const removeHaModel = (model) => {
+        const entry = selectedHaModels.find(e => e.model === model);
+        if (!entry) return;
+        entry.qty -= 1;
+        revertModelLookup(model);
+        if (entry.qty <= 0) {
+          selectedHaModels = selectedHaModels.filter(e => e.model !== model);
+        }
+        updateSelectedHaModelsDisplay();
+      };
+
+      const updateSelectedAvModelsDisplay = () => {
+        const displayElement = document.getElementById('selected-av-models-list');
+        if (selectedAvModels.length === 0) {
+          displayElement.textContent = 'None';
+        } else {
+          displayElement.innerHTML = '';
+          selectedAvModels.forEach(({ model, qty }) => {
+            const tag = document.createElement('div');
+            tag.className = 'tag';
+            const qtyBadge = qty > 1 ? `<span class="tag-qty">×${qty}</span>` : '';
+            tag.innerHTML = `${model} ${qtyBadge}<span class="tag-remove" onclick="removeAvModel('${model}')">×</span>`;
+            displayElement.appendChild(tag);
+          });
+        }
+        state.avModels = selectedAvModels
+          .map(({ model, qty }) => (qty > 1 ? `${model} x${qty}` : model))
+          .join('\n');
+      };
+
+      const updateSelectedHaModelsDisplay = () => {
+        const displayElement = document.getElementById('selected-models-list');
+        if (selectedHaModels.length === 0) {
+          displayElement.textContent = 'None';
+        } else {
+          displayElement.innerHTML = '';
+          selectedHaModels.forEach(({ model, qty }) => {
+            const tag = document.createElement('div');
+            tag.className = 'tag';
+            const qtyBadge = qty > 1 ? `<span class="tag-qty">×${qty}</span>` : '';
+            tag.innerHTML = `${model} ${qtyBadge}<span class="tag-remove" onclick="removeHaModel('${model}')">×</span>`;
+            displayElement.appendChild(tag);
+          });
+        }
+        state.haModels = selectedHaModels
+          .map(({ model, qty }) => (qty > 1 ? `${model} x${qty}` : model))
+          .join('\n');
+      };
+
+      const addAvModelToList = (model) => {
+        const trimmedModel = model.trim();
+        if (!trimmedModel) return;
+        const existing = selectedAvModels.find(e => e.model === trimmedModel);
+        if (existing) {
+          existing.qty += 1;
+        } else {
+          selectedAvModels.push({ model: trimmedModel, qty: 1 });
+        }
+        updateSelectedAvModelsDisplay();
+        applyModelLookup(trimmedModel);
+        avModelsInput.value = '';
+      };
+
+      const addHaModelToList = (model) => {
+        const trimmedModel = model.trim();
+        if (!trimmedModel) return;
+        const existing = selectedHaModels.find(e => e.model === trimmedModel);
+        if (existing) {
+          existing.qty += 1;
+        } else {
+          selectedHaModels.push({ model: trimmedModel, qty: 1 });
+        }
+        updateSelectedHaModelsDisplay();
+        applyModelLookup(trimmedModel);
+        haModelsInput.value = '';
+      };
+
+      // Add Buttons & Inputs
+      document.getElementById('add-av-model-btn').addEventListener('click', (e) => {
+        e.preventDefault();
+        addAvModelToList(avModelsInput.value);
+      });
+
+      document.getElementById('add-ha-model-btn').addEventListener('click', (e) => {
+        e.preventDefault();
+        addHaModelToList(haModelsInput.value);
+      });
+
+      // Handle Enter key
+      avModelsInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          addAvModelToList(avModelsInput.value);
+        }
+      });
+
+      haModelsInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          addHaModelToList(haModelsInput.value);
+        }
+      });
+
+      // Data Persistence
+      const save = () => {
+        const stored = localStorage.getItem(getKey());
+        const data = stored ? JSON.parse(stored) : [];
+        const today = getTodayStr();
+        const entry = { date: today, ...state };
+        const idx = data.findIndex((d) => d.date === today);
+        if (idx >= 0) data[idx] = entry;
+        else data.push(entry);
+        localStorage.setItem(getKey(), JSON.stringify(data));
+      };
+
+      const load = () => {
+        const stored = localStorage.getItem(getKey());
+        if (!stored) return;
+        const data = JSON.parse(stored);
+        const today = data.find((d) => d.date === getTodayStr());
+        if (!today) return;
+
+        state = today;
+        MODELS.forEach((m) => {
+          const row = Array.from(panelBody.rows).find(
+            (r) => r.cells[0].textContent === m,
+          );
+          if (!row) return;
+          row.cells[1].firstChild.value = today.panel[m].ss;
+          row.cells[2].firstChild.value = today.panelValues[m] || "";
+        });
+        HA_CATEGORIES.forEach((h) => {
+          const row = Array.from(haBody.rows).find(
+            (r) => r.cells[0].textContent === h,
+          );
+          if (!row) return;
+          row.cells[1].firstChild.value = today.ha[h].ss;
+          row.cells[2].firstChild.value = today.haValues[h] || "";
+        });
+        audioSS.value = today.audio.ss;
+        audioVal.value = today.audioValue || "";
+        
+        if (today.avModels) {
+          selectedAvModels = today.avModels.split('\n').filter(m => m.trim()).map(parseModelLine);
+        } else {
+          selectedAvModels = [];
+        }
+        updateSelectedAvModelsDisplay();
+
+        if (today.haModels) {
+          selectedHaModels = today.haModels.split('\n').filter(m => m.trim()).map(parseModelLine);
+        } else {
+          selectedHaModels = [];
+        }
+        updateSelectedHaModelsDisplay();
+        
+        updateTotals();
+      };
+
+      // Report Generation - IMPROVED FOR WHATSAPP
+      const getReportData = () => {
+        save();
+        const data = JSON.parse(localStorage.getItem(getKey()) || "[]");
+        const mtd = {
+          panel: {},
+          audio: { ss: 0, lg: 0, so: 0, ot: 0 },
+          ha: {},
+          avVal: 0,
+          haVal: 0,
+        };
+        MODELS.forEach((m) => (mtd.panel[m] = { ss: 0, so: 0, pa: 0, ot: 0 }));
+        HA_CATEGORIES.forEach(
+          (h) => (mtd.ha[h] = { ss: 0, lg: 0, go: 0, ot: 0 }),
+        );
+
+        data.forEach((d) => {
+          MODELS.forEach((m) => {
+            mtd.panel[m].ss += parseInt(d.panel[m]?.ss || 0);
+            mtd.panel[m].so += parseInt(d.panel[m]?.so || 0);
+            mtd.panel[m].pa += parseInt(d.panel[m]?.pa || 0);
+            mtd.panel[m].ot += parseInt(d.panel[m]?.ot || 0);
+          });
+          mtd.audio.ss += parseInt(d.audio?.ss || 0);
+          mtd.audio.lg += parseInt(d.audio?.lg || 0);
+          mtd.audio.so += parseInt(d.audio?.so || 0);
+          mtd.audio.ot += parseInt(d.audio?.ot || 0);
+          HA_CATEGORIES.forEach((h) => {
+            mtd.ha[h].ss += parseInt(d.ha[h]?.ss || 0);
+            mtd.ha[h].lg += parseInt(d.ha[h]?.lg || 0);
+            mtd.ha[h].go += parseInt(d.ha[h]?.go || 0);
+            mtd.ha[h].ot += parseInt(d.ha[h]?.ot || 0);
+          });
+          mtd.avVal += parseInt(d.avValue || 0);
+          mtd.haVal += parseInt(d.haValue || 0);
+        });
+
+        const dateStr = getTodayDate().toLocaleDateString("en-GB", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        });
+
+        // Only include rows that have at least one non-zero value (FTD or MTD)
+        const hasData = (...vals) => vals.some((v) => (parseInt(v) || 0) !== 0);
+
+        const activeModels = MODELS.filter((m) => {
+          const f = state.panel[m], mm = mtd.panel[m];
+          return (
+            hasData(f.ss, f.so, f.pa, f.ot, state.panelValues[m]) ||
+            hasData(mm.ss, mm.so, mm.pa, mm.ot)
+          );
+        });
+        const displayModels = activeModels.length > 0 ? activeModels : MODELS;
+
+        const activeHaCategories = HA_CATEGORIES.filter((h) => {
+          const f = state.ha[h], mm = mtd.ha[h];
+          return (
+            hasData(f.ss, f.lg, f.go, f.ot, state.haValues[h]) ||
+            hasData(mm.ss, mm.lg, mm.go, mm.ot)
+          );
+        });
+        const displayHaCategories = activeHaCategories.length > 0 ? activeHaCategories : HA_CATEGORIES;
+        
+        let tSS = 0, tSO = 0, tPA = 0, tOT = 0;
+        Object.values(state.panel).forEach((v) => {
+          tSS += parseInt(v.ss || 0);
+          tSO += parseInt(v.so || 0);
+          tPA += parseInt(v.pa || 0);
+          tOT += parseInt(v.ot || 0);
+        });
+
+        let mSS = 0, mSO = 0, mPA = 0, mOT = 0;
+        Object.values(mtd.panel).forEach((v) => {
+          mSS += v.ss;
+          mSO += v.so;
+          mPA += v.pa;
+          mOT += v.ot;
+        });
+
+        let hSS = 0, hLG = 0, hGO = 0, hOT = 0;
+        Object.values(state.ha).forEach((v) => {
+          hSS += parseInt(v.ss || 0);
+          hLG += parseInt(v.lg || 0);
+          hGO += parseInt(v.go || 0);
+          hOT += parseInt(v.ot || 0);
+        });
+
+        let mhSS = 0, mhLG = 0, mhGO = 0, mhOT = 0;
+        Object.values(mtd.ha).forEach((v) => {
+          mhSS += v.ss;
+          mhLG += v.lg;
+          mhGO += v.go;
+          mhOT += v.ot;
+        });
+
+        // IMPROVED REPORT FORMATTING FOR WHATSAPP
+        const LINE = '━━━━━━━━━━━━━━━━━━━━━━━';
+        
+        // Build AV part with better alignment
+        let avTxt = `AV SALES REPORT\n`;
+        avTxt += `Date : ${dateStr}\n`;
+        avTxt += `Store: M'lore Digital Matrix\n`;
+        avTxt += `SEC  : Durga Prasad D Shetty\n\n`;
+        avTxt += `${LINE}\n\n`;
+        avTxt += `PANEL SALES FTD\n`;
+        avTxt += `${padRight('Model', 12)} ${padLeft('SS', 3)} ${padLeft('SO', 3)} ${padLeft('PA', 3)} ${padLeft('OT', 3)}\n`;
+
+        displayModels.forEach((m) => {
+          const d = state.panel[m];
+          avTxt += `${padRight(m, 12)} ${padLeft(d.ss || 0, 3)} ${padLeft(d.so || 0, 3)} ${padLeft(d.pa || 0, 3)} ${padLeft(d.ot || 0, 3)}\n`;
+        });
+
+        avTxt += `${LINE}\n`;
+        avTxt += `${padRight('Total', 12)} ${padLeft(tSS, 3)} ${padLeft(tSO, 3)} ${padLeft(tPA, 3)} ${padLeft(tOT, 3)}\n`;
+        avTxt += `${LINE}\n\n`;
+        
+        avTxt += `PANEL SALES MTD\n`;
+        avTxt += `${padRight('Model', 12)} ${padLeft('SS', 3)} ${padLeft('SO', 3)} ${padLeft('PA', 3)} ${padLeft('OT', 3)}\n`;
+
+        displayModels.forEach((m) => {
+          const d = mtd.panel[m];
+          avTxt += `${padRight(m, 12)} ${padLeft(d.ss, 3)} ${padLeft(d.so, 3)} ${padLeft(d.pa, 3)} ${padLeft(d.ot, 3)}\n`;
+        });
+        
+        avTxt += `${LINE}\n`;
+        avTxt += `${padRight('Total', 12)} ${padLeft(mSS, 3)} ${padLeft(mSO, 3)} ${padLeft(mPA, 3)} ${padLeft(mOT, 3)}\n`;
+        avTxt += `${LINE}\n\n`;
+        
+        avTxt += `Audio QTY Sales FTD\n`;
+        avTxt += `${padRight('Type', 12)} ${padLeft('SS', 3)} ${padLeft('LG', 3)} ${padLeft('SO', 3)} ${padLeft('OT', 3)}\n`;
+        avTxt += `${padRight('Audio', 12)} ${padLeft(state.audio.ss || 0, 3)} ${padLeft(state.audio.lg || 0, 3)} ${padLeft(state.audio.so || 0, 3)} ${padLeft(state.audio.ot || 0, 3)}\n\n`;
+        
+        avTxt += `Audio QTY Sales MTD\n`;
+        avTxt += `${padRight('Type', 12)} ${padLeft('SS', 3)} ${padLeft('LG', 3)} ${padLeft('SO', 3)} ${padLeft('OT', 3)}\n`;
+        avTxt += `${padRight('Audio', 12)} ${padLeft(mtd.audio.ss, 3)} ${padLeft(mtd.audio.lg, 3)} ${padLeft(mtd.audio.so, 3)} ${padLeft(mtd.audio.ot, 3)}\n`;
+        avTxt += `${LINE}\n\n`;
+        
+        avTxt += `VALUE FTD / MTD\n`;
+        avTxt += `AV: ${formatNum(state.avValue)} / ${formatNum(mtd.avVal)}\n\n`;
+        avTxt += `Today Sold Models\n${state.avModels || "None"}`;
+
+        // Build HA part with better alignment
+        let haTxt = `HA SALES REPORT\n`;
+        haTxt += `Date : ${dateStr}\n`;
+        haTxt += `Store: M'lore Digital Matrix\n`;
+        haTxt += `SEC  : Durga Prasad D Shetty\n\n`;
+        haTxt += `${LINE}\n\n`;
+        
+        haTxt += `HA SALES FTD\n`;
+        haTxt += `${padRight('Category', 12)} ${padLeft('SS', 3)} ${padLeft('LG', 3)} ${padLeft('GO', 3)} ${padLeft('OT', 3)}\n`;
+
+        displayHaCategories.forEach((h) => {
+          const d = state.ha[h];
+          haTxt += `${padRight(h, 12)} ${padLeft(d.ss || 0, 3)} ${padLeft(d.lg || 0, 3)} ${padLeft(d.go || 0, 3)} ${padLeft(d.ot || 0, 3)}\n`;
+        });
+
+        haTxt += `${LINE}\n`;
+        haTxt += `${padRight('Total', 12)} ${padLeft(hSS, 3)} ${padLeft(hLG, 3)} ${padLeft(hGO, 3)} ${padLeft(hOT, 3)}\n`;
+        haTxt += `${LINE}\n\n`;
+        
+        haTxt += `HA SALES MTD\n`;
+        haTxt += `${padRight('Category', 12)} ${padLeft('SS', 3)} ${padLeft('LG', 3)} ${padLeft('GO', 3)} ${padLeft('OT', 3)}\n`;
+
+        displayHaCategories.forEach((h) => {
+          const d = mtd.ha[h];
+          haTxt += `${padRight(h, 12)} ${padLeft(d.ss, 3)} ${padLeft(d.lg, 3)} ${padLeft(d.go, 3)} ${padLeft(d.ot, 3)}\n`;
+        });
+        
+        haTxt += `${LINE}\n`;
+        haTxt += `${padRight('Total', 12)} ${padLeft(mhSS, 3)} ${padLeft(mhLG, 3)} ${padLeft(mhGO, 3)} ${padLeft(mhOT, 3)}\n`;
+        haTxt += `${LINE}\n\n`;
+        
+        haTxt += `HA VALUE MTD\n`;
+        haTxt += `HA: ${formatNum(state.haValue)} / ${formatNum(mtd.haVal)}\n\n`;
+        haTxt += `Today Sold Categories\n${state.haModels || "None"}`;
+
+        return { avTxt, haTxt };
+      };
+
+      const wrapForWhatsApp = (text) => `\`\`\`\n${text}\n\`\`\``;
+
+      const getReport = () => {
+        const { avTxt, haTxt } = getReportData();
+        const combined = `${avTxt}\n\n${haTxt}`;
+        document.getElementById("report-text").value = wrapForWhatsApp(combined);
+        modalTitle.textContent = "Daily Report";
+        document.getElementById("modal").classList.add("open");
+      };
+
+      // Clear Data
+      const clearAllData = () => {
+        if (confirm('Are you sure you want to clear ALL data? This action cannot be undone.')) {
+          localStorage.removeItem(getKey());
+          
+          document.querySelectorAll('input').forEach(input => {
+            if (input.type === 'number') input.value = '0';
+            else input.value = '';
+          });
+
+          selectedAvModels = [];
+          selectedHaModels = [];
+          updateSelectedAvModelsDisplay();
+          updateSelectedHaModelsDisplay();
+
+          state = {
+            panel: {},
+            panelValues: {},
+            audio: { ss: 0, lg: 0, so: 0, ot: 0 },
+            audioValue: 0,
+            ha: {},
+            haValues: {},
+            avValue: 0,
+            haValue: 0,
+            avModels: "",
+            haModels: "",
+          };
+
+          MODELS.forEach((m) => {
+            state.panel[m] = { ss: 0, so: 0, pa: 0, ot: 0 };
+            state.panelValues[m] = 0;
+          });
+          HA_CATEGORIES.forEach((h) => {
+            state.ha[h] = { ss: 0, lg: 0, go: 0, ot: 0 };
+            state.haValues[h] = 0;
+          });
+
+          updateTotals();
+        }
+      };
+
+      // Handlers
+      document.getElementById("close-modal").onclick = () => document.getElementById("modal").classList.remove("open");
+      document.getElementById("modal-close-btn").onclick = () => document.getElementById("modal").classList.remove("open");
+      
+      document.getElementById("save-btn").onclick = () => {
+          save();
+          const btn = document.getElementById("save-btn");
+          const originalText = btn.innerHTML;
+          btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Saved!`;
+          setTimeout(() => btn.innerHTML = originalText, 2000);
+      };
+      
+      document.getElementById("clear-btn").onclick = clearAllData;
+      document.getElementById("report-btn").onclick = getReport;
+      document.getElementById("report-av-btn").onclick = () => {
+        const { avTxt } = getReportData();
+        document.getElementById("report-text").value = wrapForWhatsApp(avTxt);
+        modalTitle.textContent = "AV Report";
+        document.getElementById("modal").classList.add("open");
+      };
+      document.getElementById("report-ha-btn").onclick = () => {
+        const { haTxt } = getReportData();
+        document.getElementById("report-text").value = wrapForWhatsApp(haTxt);
+        modalTitle.textContent = "HA Report";
+        document.getElementById("modal").classList.add("open");
+      };
+      
+      document.getElementById("copy-btn").onclick = () => {
+        const text = document.getElementById("report-text").value;
+        const copyBtn = document.getElementById("copy-btn");
+        const reportTextarea = document.getElementById("report-text");
+
+        reportTextarea.focus();
+        reportTextarea.select();
+        
+        try {
+          if (navigator.clipboard) {
+            navigator.clipboard.writeText(text).then(() => {
+               showSuccess(copyBtn);
+            }).catch(() => {
+               document.execCommand('copy');
+               showSuccess(copyBtn);
+            });
+          } else {
+            document.execCommand('copy');
+            showSuccess(copyBtn);
+          }
+        } catch (err) {
+          alert('Press Ctrl+C to copy!');
+        }
+      };
+
+      function showSuccess(btn) {
+        const original = btn.innerHTML;
+        btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Copied!`;
+        setTimeout(() => btn.innerHTML = original, 2000);
+      }
+
+      // Populate Datalists
+      const populateDatalist = (id, items) => {
+        const list = document.getElementById(id);
+        items.forEach(item => {
+          const option = document.createElement('option');
+          option.value = item;
+          list.appendChild(option);
+        });
+      };
+
+      populateDatalist('av-models-list', TV_MODELS_SOLD);
+      populateDatalist('ha-models-list', HA_MODELS_SOLD);
+
+      // Section Toggle
+      document.querySelectorAll('.section-header').forEach(header => {
+        header.addEventListener('click', function() {
+          const section = this.closest('section');
+          const content = section.querySelector('.section-content');
+          this.classList.toggle('collapsed');
+          content.classList.toggle('collapsed');
+        });
+      });
+      
+      // Initialize
+      document.getElementById("current-date").textContent = getTodayDate().toLocaleDateString("en-GB", {
+          day: "numeric",
+          month: "short",
+      });
+      load();
+      
+      // Make remove functions global
+      window.removeAvModel = removeAvModel;
+      window.removeHaModel = removeHaModel;
+    </script>
+  </body>
+</html>
